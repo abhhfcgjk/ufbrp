@@ -18,10 +18,21 @@ mu = (0.485, 0.456, 0.406)
 sigma = (0.229, 0.224, 0.225)
 
 
+class LipReg_aa_IMAGENET(LipReg_aa):
+    def __init__(self, wavelet_level, wavelet_method, num_classes, jacobian_delta, k, filter_size, learnable):
+        super().__init__(wavelet_level, wavelet_method, num_classes, jacobian_delta, k, filter_size, learnable)
+        self.mu = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+        self.sigma = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+
+    def forward(self, x):
+        x = (x - self.mu.to(x.device))/self.sigma.to(x.device)
+        return super().forward(x)
+
+
 linf = OrderedDict(
     [
-        ('LipReg_aa', {
-            'model': lambda: normalize_model(LipReg_aa(
+        ('LipReg_aa-adv', {
+            'model': lambda: LipReg_aa_IMAGENET(
                 num_classes=1000,
                 wavelet_level=2,
                 wavelet_method="haar",
@@ -29,8 +40,21 @@ linf = OrderedDict(
                 k=1.0,
                 filter_size=5,
                 learnable=True
-            ), mu, sigma),
-            'gdrive_id': '',
+            ),
+            'gdrive_id': '1NCSbl4PAnf3a8GQmn8mxHROk_dwjH5v9',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('LipReg_aa', {
+            'model': lambda: LipReg_aa_IMAGENET(
+                num_classes=1000,
+                wavelet_level=2,
+                wavelet_method="haar",
+                jacobian_delta=0.5,
+                k=1.0,
+                filter_size=5,
+                learnable=True
+            ),
+            'gdrive_id': '1NL4nejk0lnYhB9E7oIQ5vMjlTK3G6K7-',
             'preprocessing': 'Res256Crop224'
         }),
         ('Wong2020Fast', {  # requires resolution 288 x 288
