@@ -321,6 +321,7 @@ def clean_accuracy(model: nn.Module,
                        batch_size].to(device)
 
             output = model(x_curr)
+            print(output.max(1)[1], y_curr, output.shape)
             acc += (output.max(1)[1] == y_curr).float().sum()
 
     return acc.item() / x.shape[0]
