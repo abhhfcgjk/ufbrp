@@ -2,6 +2,7 @@ from collections import OrderedDict
 
 import timm
 from torchvision import models as pt_models
+import torch
 
 from robustbench.model_zoo.enums import ThreatModel
 from robustbench.model_zoo.architectures.utils_architectures import normalize_model
@@ -11,7 +12,7 @@ from robustbench.model_zoo.architectures.robustarch_wide_resnet import get_model
 from robustbench.model_zoo.architectures.comp_model import get_nonlin_mixed_classifier
 from robustbench.model_zoo.architectures.sparsified_model import get_sparse_model
 from robustbench.model_zoo.architectures.MIMIR_swin_transformer import build_swin_base, build_swin_large
-
+from robustbench.model_zoo.architectures.lipreg_aa import LipReg_aa
 
 mu = (0.485, 0.456, 0.406)
 sigma = (0.229, 0.224, 0.225)
@@ -19,6 +20,19 @@ sigma = (0.229, 0.224, 0.225)
 
 linf = OrderedDict(
     [
+        ('LipReg_aa', {
+            'model': lambda: normalize_model(LipReg_aa(
+                num_classes=1000,
+                wavelet_level=2,
+                wavelet_method="haar",
+                jacobian_delta=0.5,
+                k=1.0,
+                filter_size=5,
+                learnable=True
+            ), mu, sigma),
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
         ('Wong2020Fast', {  # requires resolution 288 x 288
             'model': lambda: normalize_model(pt_models.resnet50(), mu, sigma),
             'gdrive_id': '1deM2ZNS5tf3S_-eRURJi-IlvUL8WJQ_w',
