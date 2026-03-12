@@ -175,7 +175,8 @@ def load_model(model_name: str,
             state_dict = rm_substr_from_state_dict(state_dict, 'model.')
         except:
             state_dict = rm_substr_from_state_dict(checkpoint, 'module.')
-            state_dict = rm_substr_from_state_dict(state_dict, 'model.')
+            if model_name not in ('LipReg_aa', 'LipReg_aa-adv'):
+                state_dict = rm_substr_from_state_dict(state_dict, 'model.')
 
         if dataset_ == BenchmarkDataset.imagenet:
             # Adapt checkpoint to the model defition in newer versions of timm.
@@ -203,9 +204,9 @@ def load_model(model_name: str,
                 'Chen2024Data_WRN_50_2',
                 'Xu2024MIMIR_Swin-B',
                 'Xu2024MIMIR_Swin-L',
+                'LipReg_aa', 'LipReg_aa-adv'
                 ]:
                 state_dict = add_substr_to_state_dict(state_dict, 'model.')
-
         model = _safe_load_state_dict(model, model_name, state_dict, dataset_)
 
         return model.eval()
@@ -290,7 +291,10 @@ def _safe_load_state_dict(model: nn.Module, model_name: str,
     ]
 
     try:
-        model.load_state_dict(state_dict, strict=True)
+        if model_name in ('LipReg_aa', 'LipReg_aa-adv'):
+            model.load_state_dict(state_dict, strict=False)
+        else:
+            model.load_state_dict(state_dict, strict=True)
     except RuntimeError as e:
         #with open('./log_new_models.txt', 'a') as f:
         #    f.write(str(e))
@@ -321,7 +325,6 @@ def clean_accuracy(model: nn.Module,
                        batch_size].to(device)
 
             output = model(x_curr)
-            print(output.max(1)[1], y_curr, output.shape)
             acc += (output.max(1)[1] == y_curr).float().sum()
 
     return acc.item() / x.shape[0]
