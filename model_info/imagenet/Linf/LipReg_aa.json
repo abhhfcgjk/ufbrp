@@ -8,7 +8,7 @@
   "venue": null,
   "architecture": null,
   "eps": 0.0156862745,
-  "clean_acc": "82.0",
+  "clean_acc": "78.91",
   "reported": null,
   "corruptions_acc": null,
   "corruptions_acc_3d": null,

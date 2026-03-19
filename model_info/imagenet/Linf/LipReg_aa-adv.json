@@ -8,12 +8,12 @@
   "venue": null,
   "architecture": null,
   "eps": 0.0156862745,
-  "clean_acc": "0.0",
+  "clean_acc": "63.7",
   "reported": null,
   "corruptions_acc": null,
   "corruptions_acc_3d": null,
   "corruptions_mce": null,
   "corruptions_mce_3d": null,
-  "autoattack_acc": "0.0",
+  "autoattack_acc": "35.56",
   "footnote": null
 }
