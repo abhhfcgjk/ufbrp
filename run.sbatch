@@ -13,14 +13,14 @@ IMAGE=/scratch/amoskalenko/users/28i_mel/base270.sqsh
 WORKDIR=/scratch/amoskalenko/users/28i_mel/ufbrp
 LOG=output.log
 
-srun --ntasks=1 -G 8 \
+srun --ntasks=1 -G 4 \
      --container-image "${IMAGE}" \
      --container-mounts "${WORKDIR}:/workspace" \
      bash -lc '
 set -e
 cd /workspace
 apt update
-apt install git
+apt install git -y
 pip install -r requirements.txt 
-python -m robustbench.eval --dataset=imagenet --model_name=LipReg_aa-adv --eps=0.0156862745 --n_ex=5000 --batch_size=64
+python -m robustbench.eval --dataset=imagenet --model_name=LipReg_aa-adv --eps=0.0156862745 --n_ex=5000 --batch_size=64 > test.log
 ' > $LOG 2>&1 
