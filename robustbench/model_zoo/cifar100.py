@@ -18,6 +18,162 @@ from robustbench.model_zoo.architectures.comp_model import get_composite_model, 
 from robustbench.model_zoo.architectures.sparsified_model import get_sparse_model
 
 
+
+from robustbench.model_zoo.architectures.lipreg_wideresnet import LipReg_aa_WideResNet, WideResNet as WideResNetBase
+from robustbench.model_zoo.architectures.lipreg_aa import LipReg, LipReg_aa, ResNet, ResNetBlur, BottleneckBlur, Bottleneck
+from robustbench.model_zoo.architectures.lipreg_aa_v2 import LipReg_aa as LipReg_aa_v2, ResNet as ResNet_v2, BottleneckBlur as BottleneckBlur_v2, Bottleneck as Bottleneck_v2
+
+
+
+class ImageNormalizer(nn.Module):
+    def __init__(
+        self,
+        mean: tuple[float, float, float],
+        std: tuple[float, float, float],
+        persistent: bool = True,
+    ):
+        super(ImageNormalizer, self).__init__()
+
+        self.register_buffer("mean", torch.as_tensor(mean).view(1, 3, 1, 1), persistent=persistent)
+        self.register_buffer("std", torch.as_tensor(std).view(1, 3, 1, 1), persistent=persistent)
+
+    def forward(self, inputs: torch.Tensor):
+        return (inputs - self.mean) / self.std
+
+class WideResNet_base(WideResNetBase):
+    def __init__(self, num_classes=100, depth=94, widen_factor=16):
+        super().__init__(num_classes=num_classes, depth=depth, widen_factor=widen_factor)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class WideResNet_LipReg(LipReg_aa_WideResNet):
+    def __init__(self):
+        super().__init__()
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class ResNet_LipReg(LipReg):
+    def __init__(self):
+        super().__init__(
+            wavelet_level=2,
+            wavelet_method="haar",
+            num_classes=100,
+            jacobian_delta=0.5,
+            k=1,
+        )
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class ResNet_LipReg_aa(LipReg_aa):
+    def __init__(self):
+        super().__init__(
+                wavelet_level=2,
+                wavelet_method="haar",
+                num_classes=100,
+                jacobian_delta=0.5,
+                k=1,
+                filter_size=5,
+                learnable=True
+            )
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class ResNet_LipReg_aa_v2(LipReg_aa_v2):
+    def __init__(self):
+        super().__init__(
+                wavelet_level=2,
+                wavelet_method="haar",
+                num_classes=100,
+                jacobian_delta=0.5,
+                k=1,
+                filter_size=5,
+                learnable=True
+            )
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class ResNet_base(ResNet):
+    def __init__(self, block=Bottleneck, num_blocks=[3, 4, 6, 3], num_classes=100):
+        super().__init__(block, num_blocks, num_classes)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class ResNet_v2_base(ResNet_v2):
+    def __init__(self, block=Bottleneck_v2, num_blocks=[3, 4, 6, 3], num_classes=100):
+        super().__init__(block, num_blocks, num_classes)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class ResNet_Blur(ResNetBlur):
+    def __init__(self, block=BottleneckBlur, num_blocks=[3, 4, 6, 3], num_classes=100, filter_size=5, learnable=True):
+        super().__init__(block, num_blocks, num_classes, filter_size, learnable)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+
+class WideResNet_base(WideResNetBase):
+    def __init__(self, num_classes=100, depth=94, widen_factor=16):
+        super().__init__(num_classes=num_classes, depth=depth, widen_factor=widen_factor)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+class WideResNet_LipReg(LipReg_aa_WideResNet):
+    def __init__(self, num_classes=100):
+        super().__init__(num_classes=100)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+
 class Chen2020EfficientNet(WideResNet):
 
     def __init__(self, depth=34, widen_factor=10):
@@ -244,6 +400,74 @@ class Modas2021PRIMEResNet18(ResNet):
 
 
 linf = OrderedDict([
+    ('WideResNet', {
+        'model': WideResNet_base,
+        'gdrive_id': '',
+    }),
+    ('WideResNet-AT', {
+        'model': WideResNet_base,
+        'gdrive_id': '',
+    }),
+    ('WideResNet_LipReg', {
+        'model': WideResNet_LipReg,
+        'gdrive_id': '',
+    }),
+    ('WideResNet_LipReg-AT', {
+        'model': WideResNet_LipReg,
+        'gdrive_id': '',
+    }),
+    ('WideResNet_LipReg-TRADES', {
+        'model': WideResNet_LipReg,
+        'gdrive_id': '',
+    }),
+    ('ResNet', {
+        'model': ResNet_base,
+        'gdrive_id': '',
+    }),
+    ('ResNet-AT', {
+        'model': ResNet_base,
+        'gdrive_id': '',
+    }),
+    ('ResNet-TRADES', {
+        'model': ResNet_v2_base,
+        'gdrive_id': '',
+    }),
+    ('ResNet-AT_v2', {
+        'model': ResNet_v2_base,
+        'gdrive_id': '',
+    }),
+    ('ResNet_AA', {
+        'model': ResNet_Blur,
+        'gdrive_id': '',
+    }),
+    ('ResNet_AA-AT', {
+        'model': ResNet_Blur,
+        'gdrive_id': '',
+    }),
+    ('ResNet_LipReg', {
+        'model': ResNet_LipReg,
+        'gdrive_id': '',
+    }),
+    ('ResNet_LipReg-AT', {
+        'model': ResNet_LipReg,
+        'gdrive_id': '',
+    }),
+    ('ResNet_LipReg_AA', {
+        'model': ResNet_LipReg_aa,
+        'gdrive_id': '',
+    }),
+    ('ResNet_LipReg_AA-TRADES', {
+        'model': ResNet_LipReg_aa_v2,
+        'gdrive_id': '',
+    }),
+    ('ResNet_LipReg_AA-AT', {
+        'model': ResNet_LipReg_aa,
+        'gdrive_id': '',
+    }),
+    ('ResNet_LipReg_AA-AT_v2', {
+        'model': ResNet_LipReg_aa_v2,
+        'gdrive_id': '',
+    }),
     ('Gowal2020Uncovering', {
         'model':
         lambda: DMWideResNet(num_classes=100,

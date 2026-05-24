@@ -5,8 +5,10 @@
 
 .idea/
 
-models/
+# models/
+*.pth
 /data
+*.out
 
 
 # Created by https://www.toptal.com/developers/gitignore/api/vscode,python,jupyternotebook,intellij

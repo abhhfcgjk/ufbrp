@@ -1,6 +1,6 @@
-torch>=1.7.1
-torchvision>=0.8.2
-torchdiffeq
+torch==2.6.0+cu124
+torchdiffeq==0.2.5
+torchvision==0.21.0+cu124
 geotorch
 requests>=2.25.1
 numpy>=1.19.4

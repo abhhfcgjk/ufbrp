@@ -12,49 +12,173 @@ from robustbench.model_zoo.architectures.robustarch_wide_resnet import get_model
 from robustbench.model_zoo.architectures.comp_model import get_nonlin_mixed_classifier
 from robustbench.model_zoo.architectures.sparsified_model import get_sparse_model
 from robustbench.model_zoo.architectures.MIMIR_swin_transformer import build_swin_base, build_swin_large
-from robustbench.model_zoo.architectures.lipreg_aa import LipReg_aa
+from robustbench.model_zoo.architectures.lipreg_aa import LipReg, LipReg_aa, ResNet, Bottleneck, ResNetBlur, BottleneckBlur
+from robustbench.model_zoo.architectures.lipreg_convnext import LipReg_aa as CLipReg
+from robustbench.model_zoo.architectures.lipreg_swin import LipRegSwinTransformer
+# from robustbench.model_zoo.architectures.lipreg_aa_imagenet import LipReg_aa, Bottleneck
+
+
 
 mu = (0.485, 0.456, 0.406)
 sigma = (0.229, 0.224, 0.225)
 
 
-class LipReg_aa_IMAGENET(LipReg_aa):
-    def __init__(self, wavelet_level, wavelet_method, num_classes, jacobian_delta, k, filter_size, learnable):
-        super().__init__(wavelet_level, wavelet_method, num_classes, jacobian_delta, k, filter_size, learnable)
-        self.mu = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
-        self.sigma = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+class ImageNormalizer(torch.nn.Module):
+    def __init__(
+        self,
+        mean: tuple[float, float, float],
+        std: tuple[float, float, float],
+        persistent: bool = True,
+    ):
+        super(ImageNormalizer, self).__init__()
+
+        self.register_buffer("mean", torch.as_tensor(mean).view(1, 3, 1, 1), persistent=persistent)
+        self.register_buffer("std", torch.as_tensor(std).view(1, 3, 1, 1), persistent=persistent)
+
+    def forward(self, inputs: torch.Tensor):
+        return (inputs - self.mean) / self.std
+
+class ResNet_base(ResNet):
+    def __init__(self, block=Bottleneck, num_blocks=[3, 4, 6, 3], num_classes=1000):
+        super().__init__(block, num_blocks, num_classes)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
 
     def forward(self, x):
-        x = (x - self.mu.to(x.device))/self.sigma.to(x.device)
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+
+class ResNet_Blur(ResNetBlur):
+    def __init__(self, block=BottleneckBlur, num_blocks=[3, 4, 6, 3], num_classes=100, filter_size=5, learnable=True):
+        super().__init__(block, num_blocks, num_classes, filter_size, learnable)
+        # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
+        # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
+        self.normalize = ImageNormalizer((0.4914, 0.4822, 0.4465), (0.2023, 0.1994, 0.2010))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+
+# class LipReg_aa_IMAGENET(LipReg_aa):
+#     def __init__(self, wavelet_level, wavelet_method, num_classes, jacobian_delta, k, filter_size, learnable):
+#         super().__init__(wavelet_level, wavelet_method, num_classes, jacobian_delta, k, filter_size, learnable)
+#         self.mu = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+#         self.sigma = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+
+#     def forward(self, x):
+#         x = (x - self.mu.to(x.device))/self.sigma.to(x.device)
+#         return super().forward(x)
+
+class ResNet_LipReg_aa(LipReg_aa):
+    def __init__(self):
+        super().__init__(
+                wavelet_level=2,
+                wavelet_method="haar",
+                num_classes=1000,
+                jacobian_delta=0.5,
+                k=1,
+                filter_size=5,
+                learnable=True
+            )
+        self.normalize = ImageNormalizer((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
+        return super().forward(x)
+
+# class LipReg_IMAGENET(LipReg):
+#     def __init__(self, wavelet_level, wavelet_method, num_classes, jacobian_delta, k):
+#         super().__init__(wavelet_level, wavelet_method, num_classes, jacobian_delta, k)
+#         self.mu = torch.tensor([0.485, 0.456, 0.406]).view(1, 3, 1, 1)
+#         self.sigma = torch.tensor([0.229, 0.224, 0.225]).view(1, 3, 1, 1)
+
+#     def forward(self, x):
+#         x = (x - self.mu.to(x.device))/self.sigma.to(x.device)
+#         return super().forward(x)
+
+
+class ResNet_LipReg(LipReg):
+    def __init__(self):
+        super().__init__(
+                wavelet_level=2,
+                wavelet_method="haar",
+                num_classes=1000,
+                jacobian_delta=0.5,
+                k=1
+            )
+        self.normalize = ImageNormalizer((0.485, 0.456, 0.406), (0.229, 0.224, 0.225))
+
+    def forward(self, x):
+        x = (x - self.normalize.mean.to(x.device))/self.normalize.std.to(x.device)
         return super().forward(x)
 
 
 linf = OrderedDict(
     [
-        ('LipReg_aa-adv', {
-            'model': lambda: LipReg_aa_IMAGENET(
-                num_classes=1000,
-                wavelet_level=2,
-                wavelet_method="haar",
-                jacobian_delta=0.5,
-                k=1.0,
-                filter_size=5,
-                learnable=True
+        ('Swin_LipReg-AT', {
+            'model': lambda: LipRegSwinTransformer(
+                embed_dim=128, depths=[ 2, 2, 18, 2 ],
+                num_heads=[ 4, 8, 16, 32 ], window_size=7
             ),
-            'gdrive_id': '1NCSbl4PAnf3a8GQmn8mxHROk_dwjH5v9',
+            'gdrive_id': '',
+            'preprocessing': 'BicubicRes256Crop224'
+        }),
+        ('ConvNeXt_LipReg-AT', {
+            'model': lambda: CLipReg(
+                depths = [3, 3, 27, 3], 
+                dims = [128, 256, 512, 1024], 
+                learnable=False, 
+                filter_size=5
+                ),
+            'gdrive_id': '',
+            'preprocessing': 'BicubicRes256Crop224'
+        }),
+        ('ResNet_LipReg_AA-TRADES', {
+            'model': ResNet_LipReg_aa,
+            'gdrive_id': '',
             'preprocessing': 'Res256Crop224'
         }),
-        ('LipReg_aa', {
-            'model': lambda: LipReg_aa_IMAGENET(
-                num_classes=1000,
-                wavelet_level=2,
-                wavelet_method="haar",
-                jacobian_delta=0.5,
-                k=1.0,
-                filter_size=5,
-                learnable=True
-            ),
-            'gdrive_id': '1NL4nejk0lnYhB9E7oIQ5vMjlTK3G6K7-',
+        ('ResNet_LipReg_AA-AT', {
+            'model': ResNet_LipReg_aa,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet_LipReg_AA-AT_v2', {
+            'model': ResNet_LipReg_aa,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet_LipReg', {
+            'model': ResNet_LipReg,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet', {
+            'model': ResNet_base,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet-AT', {
+            'model': ResNet_base,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet-AT_v2', {
+            'model': ResNet_base,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet_AA', {
+            'model': ResNet_Blur,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet_AA-AT', {
+            'model': ResNet_Blur,
+            'gdrive_id': '',
             'preprocessing': 'Res256Crop224'
         }),
         ('Wong2020Fast', {  # requires resolution 288 x 288

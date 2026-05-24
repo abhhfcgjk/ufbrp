@@ -248,6 +248,9 @@ if __name__ == '__main__':
     # python -m robustbench.eval --n_ex=5000 --dataset=imagenet --threat_model=Linf \
     #                            --model_name=Salman2020Do_R18 --data_dir=/tmldata1/andriush/imagenet/val \
     #                            --batch_size=128 --eps=0.0156862745
-    # python -m robustbench.eval --n_ex=5000 --dataset=imagenet --batch_size=128 --eps=0.0156862745 --model_name=LipReg_aa-adv
+
+    # python -m robustbench.eval --n_ex=5000 --dataset=imagenet --batch_size=128 --eps=0.0156862745 --model_name=LipReg_aa-adv --data_dir /dataset
+    # python -m robustbench.eval  --dataset=cifar10 --batch_size=128 --eps=0.0156862745 --model_name=WideResNet_LipReg --data_dir /dataset
+    # python -m robustbench.eval --n_ex=5000 --dataset=imagenet --batch_size=128 --eps=0.0156862745 --model_name=LipReg_ConvNeXt --data_dir /dataset
     args_ = parse_args()
     main(args_)

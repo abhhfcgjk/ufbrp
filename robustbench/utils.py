@@ -175,7 +175,13 @@ def load_model(model_name: str,
             state_dict = rm_substr_from_state_dict(state_dict, 'model.')
         except:
             state_dict = rm_substr_from_state_dict(checkpoint, 'module.')
-            if model_name not in ('LipReg_aa', 'LipReg_aa-adv'):
+            if model_name not in (
+                'ResNet', 'ResNet-AT',
+                'ResNet_LipReg', 'ResNet_LipReg-AT', 
+                'ResNet_AA', 'ResNet_AA-AT',
+                'ResNet_LipReg_AA', 'ResNet_LipReg_AA-AT',
+                'ResNet_LipReg_AA-AT_v2', 'ResNet-AT_v2', 'ResNet_LipReg_AA-TRADES'
+                ):
                 state_dict = rm_substr_from_state_dict(state_dict, 'model.')
 
         if dataset_ == BenchmarkDataset.imagenet:
@@ -195,6 +201,8 @@ def load_model(model_name: str,
 
             # Some models need input normalization, which is added as extra layer.
             if model_name not in [
+                'Swin_LipReg_AA-AT', 
+                'ConvNeXt_LipReg_AA-AT',
                 'Singh2023Revisiting_ConvNeXt-T-ConvStem',
                 'Singh2023Revisiting_ViT-B-ConvStem',
                 'Singh2023Revisiting_ConvNeXt-S-ConvStem',
@@ -204,7 +212,11 @@ def load_model(model_name: str,
                 'Chen2024Data_WRN_50_2',
                 'Xu2024MIMIR_Swin-B',
                 'Xu2024MIMIR_Swin-L',
-                'LipReg_aa', 'LipReg_aa-adv'
+                'ResNet', 'ResNet-AT',
+                'ResNet_LipReg', 'ResNet_LipReg-AT', 
+                'ResNet_AA', 'ResNet_AA-AT',
+                'ResNet_LipReg_AA', 'ResNet_LipReg_AA-AT',
+                'ResNet_LipReg_AA-AT_v2', 'ResNet-AT_v2', 'ResNet_LipReg_AA-TRADES'
                 ]:
                 state_dict = add_substr_to_state_dict(state_dict, 'model.')
         model = _safe_load_state_dict(model, model_name, state_dict, dataset_)
