@@ -51,7 +51,7 @@ class ResNet_base(ResNet):
 
 
 class ResNet_Blur(ResNetBlur):
-    def __init__(self, block=BottleneckBlur, num_blocks=[3, 4, 6, 3], num_classes=100, filter_size=5, learnable=True):
+    def __init__(self, block=BottleneckBlur, num_blocks=[3, 4, 6, 3], num_classes=1000, filter_size=3, learnable=True):
         super().__init__(block, num_blocks, num_classes, filter_size, learnable)
         # self.mu = torch.tensor([0.4914, 0.4822, 0.4465]).view(1, 3, 1, 1)
         # self.sigma = torch.tensor([0.2023, 0.1994, 0.2010]).view(1, 3, 1, 1)
@@ -141,6 +141,11 @@ linf = OrderedDict(
             'gdrive_id': '',
             'preprocessing': 'Res256Crop224'
         }),
+        ('ResNet_LipReg_AA', {
+            'model': ResNet_LipReg_aa,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
         ('ResNet_LipReg_AA-AT', {
             'model': ResNet_LipReg_aa,
             'gdrive_id': '',
@@ -152,6 +157,11 @@ linf = OrderedDict(
             'preprocessing': 'Res256Crop224'
         }),
         ('ResNet_LipReg', {
+            'model': ResNet_LipReg,
+            'gdrive_id': '',
+            'preprocessing': 'Res256Crop224'
+        }),
+        ('ResNet_LipReg-AT', {
             'model': ResNet_LipReg,
             'gdrive_id': '',
             'preprocessing': 'Res256Crop224'

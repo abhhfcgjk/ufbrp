@@ -5,7 +5,7 @@
 
 .idea/
 
-# models/
+models/
 *.pth
 *.pt
 /data
