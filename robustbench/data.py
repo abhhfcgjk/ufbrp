@@ -84,6 +84,8 @@ def get_preprocessing(
     # See if the model is a timm model, if this is so, then use the custom function
     lower_model_name = model_name.lower().replace('-', '_')
     timm_model_name = f"{lower_model_name}_{dataset.value.lower()}_{threat_model.value.lower()}"
+
+    timm_model_name = model_name
     if timm.is_model(timm_model_name):
         return get_timm_model_preprocessing(timm_model_name)
     # Or directly fetch the preprocessing for the model specified in the dictionary

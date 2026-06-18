@@ -160,9 +160,9 @@ def get_pad_layer(pad_type):
 class LipReg_aa(nn.Module):
     def __init__(
         self, in_chans=3, num_classes=1000, 
-        depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], drop_path_rate=0.5, 
+        depths=[3, 3, 9, 3], dims=[96, 192, 384, 768], drop_path_rate=0., 
         layer_scale_init_value=1e-6, head_init_scale=1.,
-        wavelet_level=2,
+        wavelet_level=1,
         wavelet_method="haar",
         jacobian_delta=0.5,
         k=1,
@@ -180,20 +180,16 @@ class LipReg_aa(nn.Module):
         
         self.downsample_layers = nn.ModuleList() # stem and 3 intermediate downsampling conv layers
         stem = nn.Sequential(
-            # nn.Conv2d(in_chans, dims[0], kernel_size=4, stride=1),
-            # BlurPool(dims[0], stride=4, filt_size=filter_size, learnable=learnable),
-            # LayerNorm(dims[0], eps=1e-6, data_format="channels_first")
-            nn.Conv2d(in_chans, dims[0], kernel_size=4, stride=4),
+            nn.Conv2d(in_chans, dims[0], kernel_size=4, stride=1),
+            BlurPool(dims[0], stride=4, filt_size=filter_size, learnable=learnable),
             LayerNorm(dims[0], eps=1e-6, data_format="channels_first")
         )
         self.downsample_layers.append(stem)
         for i in range(3):
             downsample_layer = nn.Sequential(
-                    # LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
-                    # nn.Conv2d(dims[i], dims[i+1], kernel_size=2, stride=1),
-                    # BlurPool(dims[i+1], stride=2, filt_size=filter_size, learnable=learnable),
                     LayerNorm(dims[i], eps=1e-6, data_format="channels_first"),
-                    nn.Conv2d(dims[i], dims[i+1], kernel_size=2, stride=2),
+                    nn.Conv2d(dims[i], dims[i+1], kernel_size=2, stride=1),
+                    BlurPool(dims[i+1], stride=2, filt_size=filter_size, learnable=learnable),
             )
             self.downsample_layers.append(downsample_layer)
 
@@ -235,6 +231,7 @@ class LipReg_aa(nn.Module):
             )
 
         return high_freq, low_freq
+
 
     @staticmethod
     def __reconstruct_from_coeffs(
@@ -307,6 +304,14 @@ class LipReg_aa(nn.Module):
         x_decompose = self.x_high + x_low
         if self.training:
             self.__penalty = self.__jacobian_penalty(x_decompose)
-        x = self.forward_features(x)
+        x = self.forward_features(x_decompose)
         x = self.head(x)
         return x
+
+
+from timm.models.registry import register_model
+
+@register_model
+def lipreg_aa(pretrained=False, **kwargs):
+    model = LipReg_aa(depths=[3,3,27,3], dims=[128,256,512,1024], **kwargs)
+    return model

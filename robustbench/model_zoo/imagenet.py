@@ -118,6 +118,18 @@ class ResNet_LipReg(LipReg):
 
 linf = OrderedDict(
     [
+        ('swin_base_patch4_window7_224.ms_in22k_ft_in1k', {
+            'model': lambda: normalize_model(
+                timm.create_model('swin_base', pretrained=True), mu, sigma),
+            'gdrive_id': None,
+            'preprocessing': 'BicubicRes256Crop224',
+        }),
+        ('convnext_base.fb_in1k', {
+            'model': lambda: normalize_model(
+                timm.create_model('convnext_base', pretrained=True), mu, sigma),
+            'gdrive_id': None,
+            'preprocessing': 'BicubicRes256Crop224',
+        }),
         ('Swin_LipReg-AT', {
             'model': lambda: LipRegSwinTransformer(
                 embed_dim=128, depths=[ 2, 2, 18, 2 ],
@@ -131,6 +143,26 @@ linf = OrderedDict(
                 depths = [3, 3, 27, 3], 
                 dims = [128, 256, 512, 1024], 
                 learnable=False, 
+                filter_size=5
+                ),
+            'gdrive_id': '',
+            'preprocessing': 'BicubicRes256Crop224'
+        }),
+        ('ConvNeXt_LipReg_AA-AT', {
+            'model': lambda: CLipReg(
+                depths = [3, 3, 27, 3], 
+                dims = [128, 256, 512, 1024], 
+                learnable=True, 
+                filter_size=5
+                ),
+            'gdrive_id': '',
+            'preprocessing': 'BicubicRes256Crop224'
+        }),
+        ('ConvNeXt_LipReg_AA-AT_v2', {
+            'model': lambda: CLipReg(
+                depths = [3, 3, 27, 3], 
+                dims = [128, 256, 512, 1024], 
+                learnable=True, 
                 filter_size=5
                 ),
             'gdrive_id': '',

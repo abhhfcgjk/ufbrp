@@ -14,6 +14,7 @@ if __name__ == '__main__':
     if path.suffix != '.pth':
         print(f"Incorrect suffix: {path.suffix}")
     
-    ckpt = torch.load(path)
+    ckpt = torch.load(path, weights_only=False)
+    print(ckpt.keys())
     model_ckpt = ckpt.get('model', ckpt)
     torch.save(model_ckpt, path.with_suffix('.pt'))

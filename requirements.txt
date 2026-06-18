@@ -1,6 +1,6 @@
-torch==2.6.0+cu124
+torch==2.6.0 --index-url https://download.pytorch.org/whl/cu124
 torchdiffeq==0.2.5
-torchvision==0.21.0+cu124
+torchvision==0.21.0 --index-url https://download.pytorch.org/whl/cu124
 geotorch
 requests>=2.25.1
 numpy>=1.19.4
